@@ -46,21 +46,32 @@ export default function CTA() {
       <div className="absolute inset-0 bg-gradient-to-br from-blue-900/30 via-purple-900/20 to-black" />
 
       {/* Animated particles */}
-      <div className="absolute inset-0">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full bg-blue-500/20"
-            style={{
-              width: `${Math.random() * 10 + 5}px`,
-              height: `${Math.random() * 10 + 5}px`,
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              animation: `float ${Math.random() * 10 + 10}s infinite ease-in-out`,
-            }}
-          />
-        ))}
-      </div>
+      {typeof window !== 'undefined' && (
+        <div className="absolute inset-0">
+          {Array.from({ length: 20 }).map((_, i) => {
+            // Use a deterministic seed based on index instead of Math.random()
+            const width = 5 + ((i * 7) % 10);
+            const height = 5 + ((i * 11) % 10);
+            const top = ((i * 13) % 100);
+            const left = ((i * 17) % 100);
+            const animationDuration = 10 + ((i * 19) % 10);
+
+            return (
+              <div
+                key={i}
+                className="absolute rounded-full bg-blue-500/20"
+                style={{
+                  width: `${width}px`,
+                  height: `${height}px`,
+                  top: `${top}%`,
+                  left: `${left}%`,
+                  animation: `float ${animationDuration}s infinite ease-in-out`,
+                }}
+              />
+            );
+          })}
+        </div>
+      )}
 
       <div className="relative max-w-7xl mx-auto px-4 text-center">
         <div className="max-w-3xl mx-auto">

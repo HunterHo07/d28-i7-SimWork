@@ -1,16 +1,10 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSimulation } from '@/context/SimulationContext';
-import dynamic from 'next/dynamic';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
-
-// Dynamically import the 3D simulation hook with no SSR
-const DynamicSimulation3D = dynamic(
-  () => import('@/hooks/useSimulation3D'),
-  { ssr: false }
-);
+import Image from 'next/image';
 
 export default function SimulationView() {
   const { selectedRole, getAvailableTasks, startTask, currentTask, completeTask } = useSimulation();
@@ -22,45 +16,23 @@ export default function SimulationView() {
   useEffect(() => {
     setIsClient(true);
   }, []);
-
-  // Use a ref for the container
-  const containerRef = useRef(null);
-
-  // Default values for server-side rendering
-  const defaultSimulation = {
-    interactiveObjects: [],
-    interactWith: () => {},
-    movePlayerTo: () => {},
-  };
-
-  // Only use the 3D simulation hook on the client
-  const simulation3D = isClient ? DynamicSimulation3D() : defaultSimulation;
-  const { interactiveObjects, interactWith, movePlayerTo } = simulation3D;
   const [activeZone, setActiveZone] = useState(null);
   const [showTaskPanel, setShowTaskPanel] = useState(false);
   const [taskResult, setTaskResult] = useState(null);
 
+  // Define office zones
+  const officeZones = [
+    { id: 'developer', name: 'Developer Bay', color: 'blue', variant: 'primary' },
+    { id: 'designer', name: 'Design Lab', color: 'purple', variant: 'secondary' },
+    { id: 'pm', name: 'PM Area', color: 'green', variant: 'success' },
+    { id: 'data', name: 'Data Station', color: 'yellow', variant: 'warning' },
+    { id: 'ai', name: 'AI Engineering', color: 'red', variant: 'danger' }
+  ];
+
   // Handle zone click
   const handleZoneClick = (zoneType) => {
-    // Check if interactiveObjects is defined
-    if (!interactiveObjects || !Array.isArray(interactiveObjects)) {
-      // If not defined, just set the active zone and show task panel
-      setActiveZone(zoneType);
-      setShowTaskPanel(true);
-      return;
-    }
-
-    // Find an object in the zone
-    const object = interactiveObjects.find((obj) => obj.type === zoneType);
-    if (object) {
-      interactWith(object.id);
-      setActiveZone(zoneType);
-      setShowTaskPanel(true);
-    } else {
-      // If no object found, just set the active zone and show task panel
-      setActiveZone(zoneType);
-      setShowTaskPanel(true);
-    }
+    setActiveZone(zoneType);
+    setShowTaskPanel(true);
   };
 
   // Handle task completion
@@ -99,115 +71,66 @@ export default function SimulationView() {
 
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-12rem)]">
-      {/* 3D Simulation View */}
+      {/* 2D Office View */}
       <div className="flex-1 relative">
-        <div
-          ref={containerRef}
-          className="w-full h-full bg-gray-900 rounded-lg overflow-hidden"
-        />
-
-        {/* Zone selection overlay */}
-        <div className="absolute top-4 left-4 bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-gray-800">
-          <h3 className="text-lg font-bold mb-2">Office Zones</h3>
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              size="sm"
-              variant={activeZone === 'developer' ? 'primary' : 'outline'}
-              onClick={() => isClient && handleZoneClick('developer')}
-            >
-              Developer Bay
-            </Button>
-            <Button
-              size="sm"
-              variant={activeZone === 'designer' ? 'secondary' : 'outline'}
-              onClick={() => isClient && handleZoneClick('designer')}
-            >
-              Design Lab
-            </Button>
-            <Button
-              size="sm"
-              variant={activeZone === 'pm' ? 'success' : 'outline'}
-              onClick={() => isClient && handleZoneClick('pm')}
-            >
-              PM Area
-            </Button>
-            <Button
-              size="sm"
-              variant={activeZone === 'data' ? 'warning' : 'outline'}
-              onClick={() => isClient && handleZoneClick('data')}
-            >
-              Data Station
-            </Button>
+        <div className="w-full h-full bg-gray-900 rounded-lg overflow-hidden relative"
+          style={{
+            minHeight: '500px',
+            border: '1px solid rgba(59, 130, 246, 0.2)',
+            boxShadow: '0 0 20px rgba(59, 130, 246, 0.1)'
+          }}
+        >
+          {/* Office layout */}
+          <div className="absolute inset-0 p-8 grid grid-cols-3 gap-6">
+            {officeZones.map((zone) => (
+              <div
+                key={zone.id}
+                className={`
+                  relative flex flex-col items-center justify-center p-6 rounded-xl cursor-pointer
+                  transition-all duration-300 transform hover:scale-105
+                  ${activeZone === zone.id ? 'ring-2 ring-offset-2 ring-' + zone.color + '-500 bg-' + zone.color + '-900/20' : 'bg-gray-800/50 hover:bg-gray-800/80'}
+                `}
+                onClick={() => handleZoneClick(zone.id)}
+              >
+                <div className={`w-16 h-16 rounded-full bg-${zone.color}-500/20 flex items-center justify-center mb-4`}>
+                  <span className={`text-${zone.color}-500 text-2xl font-bold`}>
+                    {zone.id.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">{zone.name}</h3>
+                <p className="text-sm text-gray-400 text-center">
+                  {zone.id === 'developer' && 'Code, debug, and deploy applications'}
+                  {zone.id === 'designer' && 'Create UI/UX designs and assets'}
+                  {zone.id === 'pm' && 'Manage projects and coordinate teams'}
+                  {zone.id === 'data' && 'Analyze data and create reports'}
+                  {zone.id === 'ai' && 'Develop AI models and algorithms'}
+                </p>
+                <Button
+                  className="mt-4"
+                  size="sm"
+                  variant={zone.variant}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleZoneClick(zone.id);
+                  }}
+                >
+                  Enter Zone
+                </Button>
+              </div>
+            ))}
           </div>
-        </div>
 
-        {/* Controls overlay */}
-        <div className="absolute bottom-4 right-4 bg-gray-900/80 backdrop-blur-md p-4 rounded-lg border border-gray-800">
-          <div className="grid grid-cols-3 gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => isClient && movePlayerTo({ x: -5, z: -5 })}
-            >
-              ↖
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => isClient && movePlayerTo({ x: 0, z: -5 })}
-            >
-              ↑
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => isClient && movePlayerTo({ x: 5, z: -5 })}
-            >
-              ↗
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => isClient && movePlayerTo({ x: -5, z: 0 })}
-            >
-              ←
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => isClient && movePlayerTo({ x: 0, z: 0 })}
-            >
-              ○
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => isClient && movePlayerTo({ x: 5, z: 0 })}
-            >
-              →
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => isClient && movePlayerTo({ x: -5, z: 5 })}
-            >
-              ↙
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => isClient && movePlayerTo({ x: 0, z: 5 })}
-            >
-              ↓
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => isClient && movePlayerTo({ x: 5, z: 5 })}
-            >
-              ↘
-            </Button>
-          </div>
+          {/* Character */}
+          {activeZone && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex flex-col items-center">
+              <div className="w-12 h-12 bg-blue-500 rounded-full mb-2 flex items-center justify-center text-white font-bold">
+                {selectedRole?.title?.charAt(0) || 'Y'}
+              </div>
+              <div className="bg-gray-900/80 backdrop-blur-md px-3 py-1 rounded-full text-sm">
+                {selectedRole?.title || 'You'} in {officeZones.find(z => z.id === activeZone)?.name}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

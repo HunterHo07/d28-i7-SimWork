@@ -23,10 +23,22 @@ export const initScene = (container) => {
   camera.position.set(5, 5, 10);
 
   // Create renderer
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: true,
+    powerPreference: 'high-performance'
+  });
   renderer.setSize(container.clientWidth, container.clientHeight);
-  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit pixel ratio for performance
   renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Better shadow quality
+  renderer.outputColorSpace = THREE.SRGBColorSpace; // Correct color space
+
+  // Clear any existing canvas before appending
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
+
   container.appendChild(renderer.domElement);
 
   // Add orbit controls
@@ -59,12 +71,14 @@ export const initScene = (container) => {
   window.addEventListener('resize', handleResize);
 
   // Animation loop
+  let animationFrameId;
   const animate = () => {
-    requestAnimationFrame(animate);
+    animationFrameId = requestAnimationFrame(animate);
     controls.update();
     renderer.render(scene, camera);
   };
 
+  // Start animation
   animate();
 
   // Return scene objects and cleanup function
@@ -74,9 +88,27 @@ export const initScene = (container) => {
     renderer,
     controls,
     cleanup: () => {
+      // Cancel animation frame
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+
+      // Remove event listeners
       window.removeEventListener('resize', handleResize);
-      container.removeChild(renderer.domElement);
-      renderer.dispose();
+
+      // Dispose of Three.js resources
+      if (renderer && renderer.domElement && container.contains(renderer.domElement)) {
+        container.removeChild(renderer.domElement);
+      }
+
+      // Dispose of all resources
+      if (renderer) {
+        renderer.dispose();
+        renderer.forceContextLoss();
+      }
+
+      // Clear references
+      scene.clear();
     },
   };
 };

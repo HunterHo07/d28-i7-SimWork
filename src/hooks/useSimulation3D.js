@@ -246,6 +246,21 @@ export default function useSimulation3D(options = {}) {
     }
   }, [playerPosition]);
 
+  // Function to set container from outside
+  const setContainer = (container) => {
+    try {
+      if (container && !containerRef.current) {
+        containerRef.current = container;
+        // Initialize scene if not already initialized
+        if (!sceneRef.current) {
+          initializeScene();
+        }
+      }
+    } catch (error) {
+      console.error("Error setting container:", error);
+    }
+  };
+
   return {
     containerRef,
     playerPosition,
@@ -254,5 +269,6 @@ export default function useSimulation3D(options = {}) {
     movePlayerTo,
     interactWith,
     checkInteractions,
+    setContainer,
   };
 }

@@ -1,3 +1,7 @@
+'use client';
+
+import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import Hero from '@/components/home/Hero';
 import Features from '@/components/home/Features';
 import ProblemSolution from '@/components/home/ProblemSolution';
@@ -5,7 +9,9 @@ import DemoPreview from '@/components/home/DemoPreview';
 import Testimonials from '@/components/home/Testimonials';
 import Pricing from '@/components/home/Pricing';
 import Stats from '@/components/home/Stats';
-import CTA from '@/components/home/CTA';
+
+// Dynamically import the CTA component with no SSR to avoid hydration errors
+const CTA = dynamic(() => import('@/components/home/CTA'), { ssr: false });
 
 export default function Home() {
   return (
@@ -17,7 +23,9 @@ export default function Home() {
       <DemoPreview />
       <Testimonials />
       <Pricing />
-      <CTA />
+      <Suspense fallback={<div className="py-24 bg-gray-900">Loading...</div>}>
+        <CTA />
+      </Suspense>
     </>
   );
 }
