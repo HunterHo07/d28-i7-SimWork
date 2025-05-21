@@ -42,10 +42,22 @@ export default function SimulationView() {
 
   // Handle zone click
   const handleZoneClick = (zoneType) => {
+    // Check if interactiveObjects is defined
+    if (!interactiveObjects || !Array.isArray(interactiveObjects)) {
+      // If not defined, just set the active zone and show task panel
+      setActiveZone(zoneType);
+      setShowTaskPanel(true);
+      return;
+    }
+
     // Find an object in the zone
     const object = interactiveObjects.find((obj) => obj.type === zoneType);
     if (object) {
       interactWith(object.id);
+      setActiveZone(zoneType);
+      setShowTaskPanel(true);
+    } else {
+      // If no object found, just set the active zone and show task panel
       setActiveZone(zoneType);
       setShowTaskPanel(true);
     }
@@ -101,28 +113,28 @@ export default function SimulationView() {
             <Button
               size="sm"
               variant={activeZone === 'developer' ? 'primary' : 'outline'}
-              onClick={() => handleZoneClick('developer')}
+              onClick={() => isClient && handleZoneClick('developer')}
             >
               Developer Bay
             </Button>
             <Button
               size="sm"
               variant={activeZone === 'designer' ? 'secondary' : 'outline'}
-              onClick={() => handleZoneClick('designer')}
+              onClick={() => isClient && handleZoneClick('designer')}
             >
               Design Lab
             </Button>
             <Button
               size="sm"
               variant={activeZone === 'pm' ? 'success' : 'outline'}
-              onClick={() => handleZoneClick('pm')}
+              onClick={() => isClient && handleZoneClick('pm')}
             >
               PM Area
             </Button>
             <Button
               size="sm"
               variant={activeZone === 'data' ? 'warning' : 'outline'}
-              onClick={() => handleZoneClick('data')}
+              onClick={() => isClient && handleZoneClick('data')}
             >
               Data Station
             </Button>
@@ -135,63 +147,63 @@ export default function SimulationView() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => movePlayerTo({ x: -5, z: -5 })}
+              onClick={() => isClient && movePlayerTo({ x: -5, z: -5 })}
             >
               ↖
             </Button>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => movePlayerTo({ x: 0, z: -5 })}
+              onClick={() => isClient && movePlayerTo({ x: 0, z: -5 })}
             >
               ↑
             </Button>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => movePlayerTo({ x: 5, z: -5 })}
+              onClick={() => isClient && movePlayerTo({ x: 5, z: -5 })}
             >
               ↗
             </Button>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => movePlayerTo({ x: -5, z: 0 })}
+              onClick={() => isClient && movePlayerTo({ x: -5, z: 0 })}
             >
               ←
             </Button>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => movePlayerTo({ x: 0, z: 0 })}
+              onClick={() => isClient && movePlayerTo({ x: 0, z: 0 })}
             >
               ○
             </Button>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => movePlayerTo({ x: 5, z: 0 })}
+              onClick={() => isClient && movePlayerTo({ x: 5, z: 0 })}
             >
               →
             </Button>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => movePlayerTo({ x: -5, z: 5 })}
+              onClick={() => isClient && movePlayerTo({ x: -5, z: 5 })}
             >
               ↙
             </Button>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => movePlayerTo({ x: 0, z: 5 })}
+              onClick={() => isClient && movePlayerTo({ x: 0, z: 5 })}
             >
               ↓
             </Button>
             <Button
               size="sm"
               variant="outline"
-              onClick={() => movePlayerTo({ x: 5, z: 5 })}
+              onClick={() => isClient && movePlayerTo({ x: 5, z: 5 })}
             >
               ↘
             </Button>

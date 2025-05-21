@@ -30,52 +30,57 @@ export default function useSimulation3D(options = {}) {
 
   // Initialize the 3D scene
   const initializeScene = () => {
-    if (!containerRef.current || sceneRef.current) return;
+    try {
+      if (!containerRef.current || sceneRef.current) return;
 
-    // Initialize Three.js scene
-    const { scene, camera, renderer, controls, cleanup } = initScene(containerRef.current);
+      // Initialize Three.js scene
+      const { scene, camera, renderer, controls, cleanup } = initScene(containerRef.current);
 
-    // Create office floor
-    createOfficeFloor(scene);
+      // Create office floor
+      createOfficeFloor(scene);
 
-    // Create office layout
-    const desks = createOfficeLayout(scene);
+      // Create office layout
+      const desks = createOfficeLayout(scene);
 
-    // Create player character
-    const playerGeometry = new THREE.CylinderGeometry(0.3, 0.3, 1.8, 32);
-    const playerMaterial = new THREE.MeshStandardMaterial({
-      color: 0x3b82f6,
-      roughness: 0.7,
-    });
-    const player = new THREE.Mesh(playerGeometry, playerMaterial);
-    player.position.set(0, 0.9, 0);
-    player.castShadow = true;
-    scene.add(player);
+      // Create player character
+      const playerGeometry = new THREE.CylinderGeometry(0.3, 0.3, 1.8, 32);
+      const playerMaterial = new THREE.MeshStandardMaterial({
+        color: 0x3b82f6,
+        roughness: 0.7,
+      });
+      const player = new THREE.Mesh(playerGeometry, playerMaterial);
+      player.position.set(0, 0.9, 0);
+      player.castShadow = true;
+      scene.add(player);
 
-    // Store refs
-    sceneRef.current = { scene, camera, renderer, controls, cleanup };
-    playerRef.current = player;
+      // Store refs
+      sceneRef.current = { scene, camera, renderer, controls, cleanup };
+      playerRef.current = player;
 
-    // Set interactive objects
-    setInteractiveObjects(
-      desks.map((desk, index) => ({
-        id: `desk_${index}`,
-        object: desk,
-        position: desk.position,
-        type: getZoneType(desk.position),
-        interactionDistance: 2,
-      }))
-    );
+      // Set interactive objects
+      setInteractiveObjects(
+        desks.map((desk, index) => ({
+          id: `desk_${index}`,
+          object: desk,
+          position: desk.position,
+          type: getZoneType(desk.position),
+          interactionDistance: 2,
+        }))
+      );
 
-    // Update player position
-    setPlayerPosition({
-      x: player.position.x,
-      y: player.position.y,
-      z: player.position.z,
-    });
+      // Update player position
+      setPlayerPosition({
+        x: player.position.x,
+        y: player.position.y,
+        z: player.position.z,
+      });
 
-    // Return cleanup function
-    return cleanup;
+      // Return cleanup function
+      return cleanup;
+    } catch (error) {
+      console.error("Error initializing 3D scene:", error);
+      return () => {}; // Return empty cleanup function
+    }
   };
 
   // Determine zone type based on position
@@ -92,93 +97,121 @@ export default function useSimulation3D(options = {}) {
 
   // Move player to a position
   const movePlayerTo = (position) => {
-    if (!playerRef.current || !sceneRef.current) return;
+    try {
+      if (!playerRef.current || !sceneRef.current) return;
 
-    // Create animation
-    const startPosition = {
-      x: playerRef.current.position.x,
-      z: playerRef.current.position.z,
-    };
-
-    const endPosition = {
-      x: position.x,
-      z: position.z,
-    };
-
-    // Calculate direction for rotation
-    const direction = new THREE.Vector2(
-      endPosition.x - startPosition.x,
-      endPosition.z - startPosition.z
-    ).normalize();
-
-    // Set rotation to face movement direction
-    playerRef.current.rotation.y = Math.atan2(direction.x, direction.y);
-
-    // Animate movement
-    const duration = 1000; // 1 second
-    const startTime = Date.now();
-
-    const animate = () => {
-      const now = Date.now();
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-
-      // Interpolate position
-      playerRef.current.position.x = startPosition.x + (endPosition.x - startPosition.x) * progress;
-      playerRef.current.position.z = startPosition.z + (endPosition.z - startPosition.z) * progress;
-
-      // Update player position state
-      setPlayerPosition({
+      // Create animation
+      const startPosition = {
         x: playerRef.current.position.x,
-        y: playerRef.current.position.y,
         z: playerRef.current.position.z,
-      });
+      };
 
-      // Continue animation if not complete
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      }
-    };
+      const endPosition = {
+        x: position.x,
+        z: position.z,
+      };
 
-    // Start animation
-    animate();
+      // Calculate direction for rotation
+      const direction = new THREE.Vector2(
+        endPosition.x - startPosition.x,
+        endPosition.z - startPosition.z
+      ).normalize();
+
+      // Set rotation to face movement direction
+      playerRef.current.rotation.y = Math.atan2(direction.x, direction.y);
+
+      // Animate movement
+      const duration = 1000; // 1 second
+      const startTime = Date.now();
+
+      const animate = () => {
+        try {
+          if (!playerRef.current) return;
+
+          const now = Date.now();
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+
+          // Interpolate position
+          playerRef.current.position.x = startPosition.x + (endPosition.x - startPosition.x) * progress;
+          playerRef.current.position.z = startPosition.z + (endPosition.z - startPosition.z) * progress;
+
+          // Update player position state
+          setPlayerPosition({
+            x: playerRef.current.position.x,
+            y: playerRef.current.position.y,
+            z: playerRef.current.position.z,
+          });
+
+          // Continue animation if not complete
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          }
+        } catch (error) {
+          console.error("Error in animation frame:", error);
+        }
+      };
+
+      // Start animation
+      animate();
+    } catch (error) {
+      console.error("Error moving player:", error);
+    }
   };
 
   // Check for nearby interactive objects
   const checkInteractions = () => {
-    if (!playerRef.current) return [];
+    try {
+      if (!playerRef.current) return [];
+      if (!interactiveObjects || !Array.isArray(interactiveObjects)) return [];
 
-    const playerPos = new THREE.Vector3(
-      playerRef.current.position.x,
-      0,
-      playerRef.current.position.z
-    );
+      const playerPos = new THREE.Vector3(
+        playerRef.current.position.x,
+        0,
+        playerRef.current.position.z
+      );
 
-    // Find nearby objects
-    return interactiveObjects.filter((obj) => {
-      const objPos = new THREE.Vector3(obj.position.x, 0, obj.position.z);
-      const distance = playerPos.distanceTo(objPos);
-      return distance <= obj.interactionDistance;
-    });
+      // Find nearby objects
+      return interactiveObjects.filter((obj) => {
+        try {
+          if (!obj || !obj.position) return false;
+          const objPos = new THREE.Vector3(obj.position.x, 0, obj.position.z);
+          const distance = playerPos.distanceTo(objPos);
+          return distance <= obj.interactionDistance;
+        } catch (error) {
+          console.error("Error filtering object:", error);
+          return false;
+        }
+      });
+    } catch (error) {
+      console.error("Error checking interactions:", error);
+      return [];
+    }
   };
 
   // Interact with an object
   const interactWith = (objectId) => {
-    const object = interactiveObjects.find((obj) => obj.id === objectId);
-    if (!object) return;
+    try {
+      if (!interactiveObjects || !Array.isArray(interactiveObjects)) return;
 
-    // Move player to object
-    movePlayerTo(object.position);
+      const object = interactiveObjects.find((obj) => obj.id === objectId);
+      if (!object) return;
 
-    // Set current interaction
-    setCurrentInteraction(object);
+      // Move player to object
+      movePlayerTo(object.position);
 
-    // Select role based on zone
-    if (object.type && simulation.selectRole) {
-      simulation.selectRole(object.type);
+      // Set current interaction
+      setCurrentInteraction(object);
+
+      // Select role based on zone
+      if (object.type && simulation && simulation.selectRole) {
+        simulation.selectRole(object.type);
+      }
+
+      return object;
+    } catch (error) {
+      console.error("Error interacting with object:", error);
     }
-
-    return object;
   };
 
   // Initialize scene on mount
@@ -189,9 +222,13 @@ export default function useSimulation3D(options = {}) {
     const cleanup = initializeScene();
 
     return () => {
-      if (cleanup) cleanup();
-      if (sceneRef.current && sceneRef.current.cleanup) {
-        sceneRef.current.cleanup();
+      try {
+        if (cleanup && typeof cleanup === 'function') cleanup();
+        if (sceneRef.current && sceneRef.current.cleanup && typeof sceneRef.current.cleanup === 'function') {
+          sceneRef.current.cleanup();
+        }
+      } catch (error) {
+        console.error("Error during cleanup:", error);
       }
     };
   }, []);
@@ -201,8 +238,12 @@ export default function useSimulation3D(options = {}) {
     // Only run on client-side
     if (typeof window === 'undefined') return;
 
-    const nearbyObjects = checkInteractions();
-    // You could update UI here to show interaction prompts
+    try {
+      const nearbyObjects = checkInteractions();
+      // You could update UI here to show interaction prompts
+    } catch (error) {
+      console.error("Error checking for interactions:", error);
+    }
   }, [playerPosition]);
 
   return {
